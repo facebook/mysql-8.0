@@ -197,8 +197,10 @@ ENDIF()
 # Maintainer mode is default on only for debug builds using GCC/G++
 IF(CMAKE_BUILD_TYPE MATCHES "Debug" OR WITH_DEBUG)
   IF(CMAKE_COMPILER_IS_GNUCC AND CMAKE_COMPILER_IS_GNUCXX)
-    SET(MYSQL_MAINTAINER_MODE ON CACHE BOOL
-        "MySQL maintainer-specific development environment")
+    IF(DEFINED FACEBOOK_INTERNAL AND NOT "${FACEBOOK_INTERNAL}" MATCHES "1")
+      SET(MYSQL_MAINTAINER_MODE ON CACHE BOOL
+          "MySQL maintainer-specific development environment")
+    ENDIF()
   ENDIF()
 ENDIF()
 

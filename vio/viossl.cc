@@ -432,7 +432,11 @@ static int ssl_do(struct st_VioSSLFd *ptr, Vio *vio, long timeout,
 
 #if !defined(HAVE_YASSL) && !defined(DBUG_OFF)
   {
+#ifndef OPENSSL_IS_BORINGSSL
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
+#else
+    COMP_METHOD *ssl_comp_methods = NULL;
+#endif
     ssl_comp_methods = SSL_COMP_get_compression_methods();
     n= sk_SSL_COMP_num(ssl_comp_methods);
     DBUG_PRINT("info", ("Available compression methods:\n"));
