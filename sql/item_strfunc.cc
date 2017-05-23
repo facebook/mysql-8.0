@@ -882,7 +882,7 @@ String *Item_func_des_encrypt::val_str(String *str)
   DBUG_ASSERT(fixed == 1);
 #if defined(HAVE_OPENSSL)
   uint code= ER_WRONG_PARAMETERS_TO_PROCEDURE;
-  DES_cblock ivec;
+  unsigned char ivec[8];
   struct st_des_keyblock keyblock;
   struct st_des_keyschedule keyschedule;
   const char *append_str="********";
@@ -950,14 +950,15 @@ String *Item_func_des_encrypt::val_str(String *str)
   tmp_value.set_charset(&my_charset_bin);
   tmp_value[0]=(char) (128 | key_number);
   // Real encryption
-  memset(&ivec, 0, sizeof(ivec));
+  DES_cblock ivec2;
+  memset(&ivec2, 0, sizeof(ivec2));
   DES_ede3_cbc_encrypt((const uchar*) (tmp_arg.ptr()),
 		       (uchar*) (tmp_value.ptr()+1),
 		       res_length,
 		       &keyschedule.ks1,
 		       &keyschedule.ks2,
 		       &keyschedule.ks3,
-		       &ivec, TRUE);
+		       &ivec2, TRUE);
   return &tmp_value;
 
 error:
@@ -980,7 +981,7 @@ String *Item_func_des_decrypt::val_str(String *str)
   DBUG_ASSERT(fixed == 1);
 #if defined(HAVE_OPENSSL)
   uint code= ER_WRONG_PARAMETERS_TO_PROCEDURE;
-  DES_cblock ivec;
+  unsigned char ivec[8];
   struct st_des_keyblock keyblock;
   struct st_des_keyschedule keyschedule;
   String *res= args[0]->val_str(str);
@@ -1025,14 +1026,15 @@ String *Item_func_des_decrypt::val_str(String *str)
   if (tmp_value.alloc(length-1))
     goto error;
 
-  memset(&ivec, 0, sizeof(ivec));
+  DES_cblock ivec2;
+  memset(&ivec2, 0, sizeof(ivec2));
   DES_ede3_cbc_encrypt((const uchar*) res->ptr()+1,
 		       (uchar*) (tmp_value.ptr()),
 		       length-1,
 		       &keyschedule.ks1,
 		       &keyschedule.ks2,
 		       &keyschedule.ks3,
-		       &ivec, FALSE);
+		       &ivec2, FALSE);
   /* Restore old length of key */
   if ((tail=(uint) (uchar) tmp_value[length-2]) > 8)
     goto wrong_key;				     // Wrong key

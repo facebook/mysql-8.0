@@ -86,7 +86,7 @@ load_des_key_file(const char *file_name)
 
       if (start != end)
       {
-	DES_cblock ivec;
+	unsigned char ivec[8];
 	memset(&ivec, 0, sizeof(ivec));
 	// We make good 24-byte (168 bit) key from given plaintext key with MD5
 	EVP_BytesToKey(EVP_des_ede3_cbc(),EVP_md5(),NULL,

@@ -49,6 +49,7 @@ const char *my_aes_opmode_names[]=
   "aes-128-cbc",
   "aes-192-cbc",
   "aes-256-cbc",
+#ifndef OPENSSL_IS_BORINGSSL
   "aes-128-cfb1",
   "aes-192-cfb1",
   "aes-256-cfb1",
@@ -61,6 +62,7 @@ const char *my_aes_opmode_names[]=
   "aes-128-ofb",
   "aes-192-ofb",
   "aes-256-ofb",
+#endif
   NULL /* needed for the type enumeration */
 };
 
@@ -77,6 +79,7 @@ static uint my_aes_opmode_key_sizes_impl[]=
   128 /* aes-128-cfb1 */,
   192 /* aes-192-cfb1 */,
   256 /* aes-256-cfb1 */,
+#ifndef OPENSSL_IS_BORINGSSL
   128 /* aes-128-cfb8 */,
   192 /* aes-192-cfb8 */,
   256 /* aes-256-cfb8 */,
@@ -86,6 +89,7 @@ static uint my_aes_opmode_key_sizes_impl[]=
   128 /* aes-128-ofb */,
   192 /* aes-192-ofb */,
   256 /* aes-256-ofb */
+#endif
 };
 
 uint *my_aes_opmode_key_sizes= my_aes_opmode_key_sizes_impl;
@@ -98,23 +102,25 @@ aes_evp_type(const my_aes_opmode mode)
   switch (mode)
   {
   case my_aes_128_ecb:    return EVP_aes_128_ecb();
+  case my_aes_192_ecb:    return EVP_aes_192_ecb();
+  case my_aes_256_ecb:    return EVP_aes_256_ecb();
   case my_aes_128_cbc:    return EVP_aes_128_cbc();
+  case my_aes_192_cbc:    return EVP_aes_192_cbc();
+  case my_aes_256_cbc:    return EVP_aes_256_cbc();
+#ifndef OPENSSL_IS_BORINGSSL
   case my_aes_128_cfb1:   return EVP_aes_128_cfb1();
   case my_aes_128_cfb8:   return EVP_aes_128_cfb8();
   case my_aes_128_cfb128: return EVP_aes_128_cfb128();
   case my_aes_128_ofb:    return EVP_aes_128_ofb();
-  case my_aes_192_ecb:    return EVP_aes_192_ecb();
-  case my_aes_192_cbc:    return EVP_aes_192_cbc();
   case my_aes_192_cfb1:   return EVP_aes_192_cfb1();
   case my_aes_192_cfb8:   return EVP_aes_192_cfb8();
   case my_aes_192_cfb128: return EVP_aes_192_cfb128();
   case my_aes_192_ofb:    return EVP_aes_192_ofb();
-  case my_aes_256_ecb:    return EVP_aes_256_ecb();
-  case my_aes_256_cbc:    return EVP_aes_256_cbc();
   case my_aes_256_cfb1:   return EVP_aes_256_cfb1();
   case my_aes_256_cfb8:   return EVP_aes_256_cfb8();
   case my_aes_256_cfb128: return EVP_aes_256_cfb128();
   case my_aes_256_ofb:    return EVP_aes_256_ofb();
+#endif
   default: return NULL;
   }
 }
@@ -143,7 +149,7 @@ int my_aes_encrypt(const unsigned char *source, uint32 source_length,
   if (!EVP_EncryptUpdate(&ctx, dest, &u_len, source, source_length))
     goto aes_error;                             /* Error */
 
-  if (!EVP_EncryptFinal(&ctx, dest + u_len, &f_len))
+  if (!EVP_EncryptFinal_ex(&ctx, dest + u_len, &f_len))
     goto aes_error;                             /* Error */
 
   EVP_CIPHER_CTX_cleanup(&ctx);

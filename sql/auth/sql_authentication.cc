@@ -3386,7 +3386,10 @@ public:
   RSA *operator()(void)
   {
     /* generate RSA keys */
-    RSA *rsa= RSA_generate_key(m_key_size, m_exponent, NULL, NULL);
+    RSA *rsa= NULL;
+    BIGNUM *bne= NULL;
+    BN_set_word(bne, m_exponent);
+    RSA_generate_key_ex(rsa, m_key_size, bne, NULL);
     return rsa; // pass ownership
   }
 
