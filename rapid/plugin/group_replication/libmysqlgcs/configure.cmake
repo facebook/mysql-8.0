@@ -40,10 +40,14 @@ ENDIF()
 # XDR related checks
 #
 
-IF (WIN32)
+IF (WIN32 OR DEFINED FACEBOOK_INTERNAL AND "${FACEBOOK_INTERNAL}" MATCHES "1")
   # On windows we bundle the rpc header and some code as well
   SET (CMAKE_REQUIRED_INCLUDES ${XCOM_BASEDIR}/windeps/sunrpc
                                ${XCOM_BASEDIR}/windeps/include)
+ENDIF()
+
+IF (DEFINED FACEBOOK_INTERNAL AND "${FACEBOOK_INTERNAL}" MATCHES "1")
+  include_directories(${XCOM_BASEDIR}/windeps/sunrpc)
 ENDIF()
 
 IF (NOT WIN32)

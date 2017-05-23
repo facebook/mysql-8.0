@@ -151,12 +151,21 @@ MACRO (MYSQL_CHECK_SSL)
       LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
       MESSAGE(STATUS "suffixes <${CMAKE_FIND_LIBRARY_SUFFIXES}>")
     ENDIF()
-    FIND_LIBRARY(OPENSSL_LIBRARY
-                 NAMES ssl ssleay32 ssleay32MD
-                 HINTS ${OPENSSL_ROOT_DIR}/lib)
-    FIND_LIBRARY(CRYPTO_LIBRARY
-                 NAMES crypto libeay32
-                 HINTS ${OPENSSL_ROOT_DIR}/lib)
+    IF(DEFINED FACEBOOK_INTERNAL AND "${FACEBOOK_INTERNAL}" MATCHES "1")
+      FIND_LIBRARY(OPENSSL_LIBRARY
+                   NAMES ssl_pic ssl ssleay32 ssleay32MD
+                   HINTS ${OPENSSL_ROOT_DIR}/lib)
+      FIND_LIBRARY(CRYPTO_LIBRARY
+                   NAMES crypto_pic crypto libeay32
+                   HINTS ${OPENSSL_ROOT_DIR}/lib)
+    ELSE()
+      FIND_LIBRARY(OPENSSL_LIBRARY
+                   NAMES ssl ssleay32 ssleay32MD
+                   HINTS ${OPENSSL_ROOT_DIR}/lib)
+      FIND_LIBRARY(CRYPTO_LIBRARY
+                   NAMES crypto libeay32
+                   HINTS ${OPENSSL_ROOT_DIR}/lib)
+    ENDIF()
     IF (WITH_SSL_PATH)
       LIST(REVERSE CMAKE_FIND_LIBRARY_SUFFIXES)
     ENDIF()
@@ -173,14 +182,23 @@ MACRO (MYSQL_CHECK_SSL)
       OPENSSL_MAJOR_VERSION "${OPENSSL_VERSION_NUMBER}"
     )
 
-    IF(OPENSSL_INCLUDE_DIR AND
-       OPENSSL_LIBRARY   AND
-       CRYPTO_LIBRARY      AND
-       OPENSSL_MAJOR_VERSION STREQUAL "1"
-      )
-      SET(OPENSSL_FOUND TRUE)
+    IF(DEFINED FACEBOOK_INTERNAL AND "${FACEBOOK_INTERNAL}" MATCHES "1")
+      IF(OPENSSL_INCLUDE_DIR AND
+         OPENSSL_LIBRARY AND
+         CRYPTO_LIBRARY)
+        SET(OPENSSL_FOUND TRUE)
+       ELSE()
+        SET(OPENSSL_FOUND FALSE)
+      ENDIF()
     ELSE()
-      SET(OPENSSL_FOUND FALSE)
+      IF(OPENSSL_INCLUDE_DIR AND
+         OPENSSL_LIBRARY AND
+         CRYPTO_LIBRARY AND
+         OPENSSL_MAJOR_VERSION STREQUAL "1")
+        SET(OPENSSL_FOUND TRUE)
+       ELSE()
+        SET(OPENSSL_FOUND FALSE)
+      ENDIF()
     ENDIF()
 
     # If we are invoked with -DWITH_SSL=/path/to/custom/openssl
