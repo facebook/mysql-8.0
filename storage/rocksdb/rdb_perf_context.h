@@ -23,7 +23,6 @@
 
 /* MySQL header files */
 #include "./handler.h"
-#include <my_global.h>
 
 namespace myrocks {
 

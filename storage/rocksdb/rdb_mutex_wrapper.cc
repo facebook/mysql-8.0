@@ -38,7 +38,7 @@ static const int64_t ONE_SECOND_IN_MICROSECS = 1000 * 1000;
 static const int64_t ONE_YEAR_IN_MICROSECS =
     ONE_SECOND_IN_MICROSECS * 60 * 60 * 24 * 365;
 
-Rdb_cond_var::Rdb_cond_var() { mysql_cond_init(0, &m_cond, nullptr); }
+Rdb_cond_var::Rdb_cond_var() { mysql_cond_init(0, &m_cond); }
 
 Rdb_cond_var::~Rdb_cond_var() { mysql_cond_destroy(&m_cond); }
 

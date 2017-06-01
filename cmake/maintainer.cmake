@@ -32,9 +32,15 @@ ENDMACRO()
 # Common flags for all versions/compilers
 #
 
+IF(DEFINED FACEBOOK_INTERNAL AND "${FACEBOOK_INTERNAL}" MATCHES "1")
+  SET(MY_WARNING_FLAGS "")
+ELSE()
+  SET(MY_WARNING_FLAGS "-Wundef")
+ENDIF()
+
 # Common warning flags for GCC, G++, Clang and Clang++
 SET(MY_WARNING_FLAGS
-    "-Wall -Wextra -Wformat-security -Wvla -Wmissing-format-attribute -Wundef")
+    "${MY_WARNING_FLAGS} -Wall -Wextra -Wformat-security -Wvla -Wmissing-format-attribute")
 
 # Common warning flags for GCC and Clang
 SET(MY_C_WARNING_FLAGS

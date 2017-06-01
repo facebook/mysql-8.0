@@ -128,7 +128,7 @@ namespace myrocks {
   To increase the comprehension and readability of MyRocks codebase we'll use
   constants similar to ones from C standard (EXIT_SUCCESS and EXIT_FAILURE) to
   make sure that both failure and success paths are clearly identifiable. The
-  definitions of FALSE and TRUE come from <my_global.h>.
+  definitions of FALSE and TRUE come from <my_inttypes.h>.
 */
 #define HA_EXIT_SUCCESS FALSE
 #define HA_EXIT_FAILURE TRUE

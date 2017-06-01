@@ -53,7 +53,11 @@ void my_create_minidump(const char *name, HANDLE process, DWORD pid);
 
 void my_write_core(int sig);
 
+/* print stack traces for all threads */
+void my_pstack();
 
+#define abort_with_stack_traces() \
+  { my_pstack(); abort(); }
 
 /**
   Async-signal-safe utility functions used by signal handler routines.
