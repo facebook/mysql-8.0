@@ -37,7 +37,7 @@ private:
   // Make sure we run only once
   std::atomic_bool m_run_once;
 
-  pthread_t m_handle;
+  my_thread_handle m_handle;
 
   std::string m_name;
 
@@ -63,7 +63,7 @@ public:
 
   void signal(const bool &stop_thread = false);
 
-  int join() { return pthread_join(m_handle, nullptr); }
+  int join() { return pthread_join(m_handle.thread, nullptr); }
 
   void setname() {
     /*
@@ -81,7 +81,7 @@ public:
     */
     DBUG_ASSERT(!m_name.empty());
 #ifdef __linux__
-    int err = pthread_setname_np(m_handle, m_name.c_str());
+    int err = pthread_setname_np(m_handle.thread, m_name.c_str());
     if (err)
     {
       // NO_LINT_DEBUG
