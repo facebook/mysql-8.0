@@ -27,7 +27,6 @@
 
 /* MySQL header files */
 #include "./handler.h"   /* handler */
-#include "./my_global.h" /* ulonglong */
 #include "./sql_string.h"
 #include "./ut0counter.h"
 
@@ -764,7 +763,8 @@ public:
     return m_store_row_debug_checksums && (rand() % 100 < m_checksums_pct);
   }
 
-  int rename_table(const char *const from, const char *const to) override
+  int rename_table(const char *const from, const char *const to,
+                   const dd::Table *from_table_def, dd::Table *to_table_def) override
       MY_ATTRIBUTE((__nonnull__, __warn_unused_result__));
 
   int convert_blob_from_storage_format(my_core::Field_blob *const blob,
@@ -1157,7 +1157,7 @@ public:
       MY_ATTRIBUTE((__warn_unused_result__));
   int external_lock(THD *const thd, int lock_type) override
       MY_ATTRIBUTE((__warn_unused_result__));
-  int truncate() override MY_ATTRIBUTE((__warn_unused_result__));
+  int truncate(dd::Table *table_def) override MY_ATTRIBUTE((__warn_unused_result__));
 
   int reset() override {
     DBUG_ENTER_FUNC();
