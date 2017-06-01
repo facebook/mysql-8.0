@@ -3170,7 +3170,7 @@ void Rdb_tbl_def::set_name(const std::string &name) {
 */
 const uchar *
 Rdb_ddl_manager::get_hash_key(Rdb_tbl_def *const rec, size_t *const length,
-                              my_bool not_used MY_ATTRIBUTE((__unused__))) {
+                              bool not_used MY_ATTRIBUTE((__unused__))) {
   const std::string &dbname_tablename = rec->full_tablename();
   *length = dbname_tablename.size();
   return reinterpret_cast<const uchar *>(dbname_tablename.c_str());
@@ -3735,7 +3735,7 @@ int Rdb_ddl_manager::put_and_write(Rdb_tbl_def *const tbl,
 */
 int Rdb_ddl_manager::put(Rdb_tbl_def *const tbl, const bool &lock) {
   Rdb_tbl_def *rec;
-  my_bool result;
+  bool result;
   const std::string &dbname_tablename = tbl->full_tablename();
 
   if (lock)

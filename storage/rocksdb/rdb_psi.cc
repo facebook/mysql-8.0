@@ -86,14 +86,14 @@ void init_rocksdb_psi_keys() {
   const char *const category = "rocksdb";
   int count;
 
-  if (PSI_server == nullptr)
+  if (psi_rwlock_service == nullptr || psi_rwlock_service == nullptr)
     return;
 
   count = array_elements(all_rocksdb_mutexes);
-  PSI_server->register_mutex(category, all_rocksdb_mutexes, count);
+  psi_mutex_service->register_mutex(category, all_rocksdb_mutexes, count);
 
   count = array_elements(all_rocksdb_rwlocks);
-  PSI_server->register_rwlock(category, all_rocksdb_rwlocks, count);
+  psi_rwlock_service->register_rwlock(category, all_rocksdb_rwlocks, count);
 
   count = array_elements(all_rocksdb_conds);
   //TODO Disabling PFS for conditions due to the bug

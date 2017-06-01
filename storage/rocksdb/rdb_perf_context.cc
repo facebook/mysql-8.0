@@ -205,10 +205,11 @@ void Rdb_io_perf::end_and_record(const uint32_t perf_context_level) {
     io_perf_read.svc_time_max = io_perf_read.svc_time =
         rocksdb::perf_context.block_read_time;
 
-    m_shared_io_perf_read->sum(io_perf_read);
-    m_stats->table_io_perf_read.sum(io_perf_read);
+    // m_shared_io_perf_read->sum(io_perf_read);
+    // m_stats->table_io_perf_read.sum(io_perf_read);
   }
 
+  /*
   if (m_stats) {
     if (rocksdb::perf_context.internal_key_skipped_count != 0) {
       m_stats->key_skipped += rocksdb::perf_context.internal_key_skipped_count;
@@ -219,6 +220,7 @@ void Rdb_io_perf::end_and_record(const uint32_t perf_context_level) {
           rocksdb::perf_context.internal_delete_skipped_count;
     }
   }
+  */
 }
 
 } // namespace myrocks

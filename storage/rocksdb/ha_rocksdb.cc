@@ -222,7 +222,7 @@ struct Rdb_open_tables_map {
 
   static uchar *get_hash_key(Rdb_table_handler *const table_handler,
                              size_t *const length,
-                             my_bool not_used MY_ATTRIBUTE((__unused__)));
+                             bool not_used MY_ATTRIBUTE((__unused__)));
 
   Rdb_table_handler *get_table_handler(const char *const table_name);
   void release_table_handler(Rdb_table_handler *const table_handler);
@@ -344,7 +344,7 @@ static void rocksdb_drop_index_wakeup_thread(
     struct st_mysql_sys_var *const var MY_ATTRIBUTE((__unused__)),
     void *const var_ptr MY_ATTRIBUTE((__unused__)), const void *const save);
 
-static my_bool rocksdb_pause_background_work = 0;
+static bool rocksdb_pause_background_work = 0;
 static mysql_mutex_t rdb_sysvars_mutex;
 
 static void rocksdb_set_pause_background_work(
@@ -436,21 +436,21 @@ static char *rocksdb_persistent_cache_path;
 static uint64_t rocksdb_index_type;
 static uint32_t rocksdb_flush_log_at_trx_commit;
 static uint32_t rocksdb_debug_optimizer_n_rows;
-static my_bool rocksdb_force_compute_memtable_stats;
-static my_bool rocksdb_debug_optimizer_no_zero_cardinality;
+static bool rocksdb_force_compute_memtable_stats;
+static bool rocksdb_debug_optimizer_no_zero_cardinality;
 static uint32_t rocksdb_wal_recovery_mode;
 static uint32_t rocksdb_access_hint_on_compaction_start;
 static char *rocksdb_compact_cf_name;
 static char *rocksdb_checkpoint_name;
-static my_bool rocksdb_signal_drop_index_thread;
-static my_bool rocksdb_strict_collation_check = 1;
-static my_bool rocksdb_enable_2pc = 0;
+static bool rocksdb_signal_drop_index_thread;
+static bool rocksdb_strict_collation_check = 1;
+static bool rocksdb_enable_2pc = 0;
 static char *rocksdb_strict_collation_exceptions;
-static my_bool rocksdb_collect_sst_properties = 1;
-static my_bool rocksdb_force_flush_memtable_now_var = 0;
-static my_bool rocksdb_force_flush_memtable_and_lzero_now_var = 0;
-static my_bool rocksdb_enable_ttl = 1;
-static my_bool rocksdb_reset_stats = 0;
+static bool rocksdb_collect_sst_properties = 1;
+static bool rocksdb_force_flush_memtable_now_var = 0;
+static bool rocksdb_force_flush_memtable_and_lzero_now_var = 0;
+static bool rocksdb_enable_ttl = 1;
+static bool rocksdb_reset_stats = 0;
 static uint64_t rocksdb_number_stat_computes = 0;
 static uint32_t rocksdb_seconds_between_stat_computes = 3600;
 static long long rocksdb_compaction_sequential_deletes = 0l;
@@ -459,8 +459,8 @@ static long long rocksdb_compaction_sequential_deletes_file_size = 0l;
 static uint32_t rocksdb_validate_tables = 1;
 static char *rocksdb_datadir;
 static uint32_t rocksdb_table_stats_sampling_pct;
-static my_bool rocksdb_enable_bulk_load_api = 1;
-static my_bool rocksdb_print_snapshot_conflict_queries = 0;
+static bool rocksdb_enable_bulk_load_api = 1;
+static bool rocksdb_print_snapshot_conflict_queries = 0;
 
 std::atomic<uint64_t> rocksdb_snapshot_conflict_errors(0);
 std::atomic<uint64_t> rocksdb_wal_group_syncs(0);
@@ -651,14 +651,14 @@ static MYSQL_THDVAR_ULONGLONG(
 
 static MYSQL_SYSVAR_BOOL(
     create_if_missing,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->create_if_missing),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->create_if_missing),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::create_if_missing for RocksDB", nullptr, nullptr,
     rocksdb_db_options->create_if_missing);
 
 static MYSQL_SYSVAR_BOOL(
     create_missing_column_families,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_db_options->create_missing_column_families),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::create_missing_column_families for RocksDB", nullptr, nullptr,
@@ -666,14 +666,14 @@ static MYSQL_SYSVAR_BOOL(
 
 static MYSQL_SYSVAR_BOOL(
     error_if_exists,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->error_if_exists),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->error_if_exists),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::error_if_exists for RocksDB", nullptr, nullptr,
     rocksdb_db_options->error_if_exists);
 
 static MYSQL_SYSVAR_BOOL(
     paranoid_checks,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->paranoid_checks),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->paranoid_checks),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::paranoid_checks for RocksDB", nullptr, nullptr,
     rocksdb_db_options->paranoid_checks);
@@ -733,7 +733,7 @@ static MYSQL_SYSVAR_ULONG(compaction_readahead_size,
 
 static MYSQL_SYSVAR_BOOL(
     new_table_reader_for_compaction_inputs,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_db_options->new_table_reader_for_compaction_inputs),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::new_table_reader_for_compaction_inputs for RocksDB", nullptr,
@@ -749,7 +749,7 @@ static MYSQL_SYSVAR_UINT(
 
 static MYSQL_SYSVAR_BOOL(
     allow_concurrent_memtable_write,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_db_options->allow_concurrent_memtable_write),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::allow_concurrent_memtable_write for RocksDB", nullptr, nullptr,
@@ -757,7 +757,7 @@ static MYSQL_SYSVAR_BOOL(
 
 static MYSQL_SYSVAR_BOOL(
     enable_write_thread_adaptive_yield,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_db_options->enable_write_thread_adaptive_yield),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::enable_write_thread_adaptive_yield for RocksDB", nullptr,
@@ -777,7 +777,7 @@ static MYSQL_SYSVAR_ULONG(max_total_wal_size,
                           /* min */ 0L, /* max */ LONG_MAX, 0);
 
 static MYSQL_SYSVAR_BOOL(
-    use_fsync, *reinterpret_cast<my_bool *>(&rocksdb_db_options->use_fsync),
+    use_fsync, *reinterpret_cast<bool *>(&rocksdb_db_options->use_fsync),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::use_fsync for RocksDB", nullptr, nullptr,
     rocksdb_db_options->use_fsync);
@@ -900,14 +900,14 @@ static MYSQL_SYSVAR_ULONG(manifest_preallocation_size,
 
 static MYSQL_SYSVAR_BOOL(
     use_direct_reads,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->use_direct_reads),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->use_direct_reads),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::use_direct_reads for RocksDB", nullptr, nullptr,
     rocksdb_db_options->use_direct_reads);
 
 static MYSQL_SYSVAR_BOOL(
     use_direct_io_for_flush_and_compaction,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_db_options->use_direct_io_for_flush_and_compaction),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::use_direct_io_for_flush_and_compaction for RocksDB", nullptr,
@@ -915,21 +915,21 @@ static MYSQL_SYSVAR_BOOL(
 
 static MYSQL_SYSVAR_BOOL(
     allow_mmap_reads,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->allow_mmap_reads),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->allow_mmap_reads),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::allow_mmap_reads for RocksDB", nullptr, nullptr,
     rocksdb_db_options->allow_mmap_reads);
 
 static MYSQL_SYSVAR_BOOL(
     allow_mmap_writes,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->allow_mmap_writes),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->allow_mmap_writes),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::allow_mmap_writes for RocksDB", nullptr, nullptr,
     rocksdb_db_options->allow_mmap_writes);
 
 static MYSQL_SYSVAR_BOOL(
     is_fd_close_on_exec,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->is_fd_close_on_exec),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->is_fd_close_on_exec),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::is_fd_close_on_exec for RocksDB", nullptr, nullptr,
     rocksdb_db_options->is_fd_close_on_exec);
@@ -944,7 +944,7 @@ static MYSQL_SYSVAR_UINT(stats_dump_period_sec,
 
 static MYSQL_SYSVAR_BOOL(
     advise_random_on_open,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->advise_random_on_open),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->advise_random_on_open),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::advise_random_on_open for RocksDB", nullptr, nullptr,
     rocksdb_db_options->advise_random_on_open);
@@ -959,7 +959,7 @@ static MYSQL_SYSVAR_ULONG(db_write_buffer_size,
 
 static MYSQL_SYSVAR_BOOL(
     use_adaptive_mutex,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->use_adaptive_mutex),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->use_adaptive_mutex),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::use_adaptive_mutex for RocksDB", nullptr, nullptr,
     rocksdb_db_options->use_adaptive_mutex);
@@ -979,7 +979,7 @@ static MYSQL_SYSVAR_ULONG(wal_bytes_per_sync,
 
 static MYSQL_SYSVAR_BOOL(
     enable_thread_tracking,
-    *reinterpret_cast<my_bool *>(&rocksdb_db_options->enable_thread_tracking),
+    *reinterpret_cast<bool *>(&rocksdb_db_options->enable_thread_tracking),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "DBOptions::enable_thread_tracking for RocksDB", nullptr, nullptr, true);
 
@@ -993,7 +993,7 @@ static MYSQL_SYSVAR_LONGLONG(block_cache_size, rocksdb_block_cache_size,
 
 static MYSQL_SYSVAR_BOOL(
     cache_index_and_filter_blocks,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_tbl_options->cache_index_and_filter_blocks),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "BlockBasedTableOptions::cache_index_and_filter_blocks for RocksDB",
@@ -1009,7 +1009,7 @@ static MYSQL_SYSVAR_BOOL(
 // index / QPS using PK).
 static MYSQL_SYSVAR_BOOL(
     pin_l0_filter_and_index_blocks_in_cache,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_tbl_options->pin_l0_filter_and_index_blocks_in_cache),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "pin_l0_filter_and_index_blocks_in_cache for RocksDB", nullptr, nullptr,
@@ -1024,7 +1024,7 @@ static MYSQL_SYSVAR_ENUM(index_type, rocksdb_index_type,
 
 static MYSQL_SYSVAR_BOOL(
     hash_index_allow_collision,
-    *reinterpret_cast<my_bool *>(
+    *reinterpret_cast<bool *>(
         &rocksdb_tbl_options->hash_index_allow_collision),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "BlockBasedTableOptions::hash_index_allow_collision for RocksDB", nullptr,
@@ -1032,7 +1032,7 @@ static MYSQL_SYSVAR_BOOL(
 
 static MYSQL_SYSVAR_BOOL(
     no_block_cache,
-    *reinterpret_cast<my_bool *>(&rocksdb_tbl_options->no_block_cache),
+    *reinterpret_cast<bool *>(&rocksdb_tbl_options->no_block_cache),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "BlockBasedTableOptions::no_block_cache for RocksDB", nullptr, nullptr,
     rocksdb_tbl_options->no_block_cache);
@@ -1059,7 +1059,7 @@ static MYSQL_SYSVAR_INT(
 
 static MYSQL_SYSVAR_BOOL(
     whole_key_filtering,
-    *reinterpret_cast<my_bool *>(&rocksdb_tbl_options->whole_key_filtering),
+    *reinterpret_cast<bool *>(&rocksdb_tbl_options->whole_key_filtering),
     PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_READONLY,
     "BlockBasedTableOptions::whole_key_filtering for RocksDB", nullptr, nullptr,
     rocksdb_tbl_options->whole_key_filtering);
@@ -1458,7 +1458,7 @@ rdb_get_rocksdb_write_options(my_core::THD *const thd) {
 uchar *
 Rdb_open_tables_map::get_hash_key(Rdb_table_handler *const table_handler,
                                   size_t *const length,
-                                  my_bool not_used MY_ATTRIBUTE((__unused__))) {
+                                  bool not_used MY_ATTRIBUTE((__unused__))) {
   *length = table_handler->m_table_name_length;
   return reinterpret_cast<uchar *>(table_handler->m_table_name);
 }
@@ -4206,36 +4206,8 @@ ha_rocksdb::ha_rocksdb(my_core::handlerton *const hton,
   mysql_mutex_init(0, &m_bulk_load_mutex, MY_MUTEX_INIT_FAST);
 }
 
-static const char *ha_rocksdb_exts[] = {NullS};
-
-const char **ha_rocksdb::bas_ext() const {
-  DBUG_ENTER_FUNC();
-
-  DBUG_RETURN(ha_rocksdb_exts);
-}
-
 bool ha_rocksdb::same_table(const ha_rocksdb &other) const {
   return m_tbl_def->base_tablename() == other.m_tbl_def->base_tablename();
-}
-
-/**
-  @return
-    false  OK
-    other  Error inpacking the data
-*/
-bool ha_rocksdb::init_with_fields() {
-  DBUG_ENTER_FUNC();
-
-  const uint pk = table_share->primary_key;
-  if (pk != MAX_KEY) {
-    const uint key_parts = table_share->key_info[pk].user_defined_key_parts;
-    check_keyread_allowed(pk /*PK*/, key_parts - 1, true);
-  } else
-    m_pk_can_be_decoded = false;
-
-  cached_table_flags = table_flags();
-
-  DBUG_RETURN(false); /* Ok */
 }
 
 /**
@@ -5004,7 +4976,8 @@ void ha_rocksdb::set_skip_unique_check_tables(const char *const whitelist) {
     HA_EXIT_SUCCESS  OK
     other            HA_ERR error code (can be SE-specific)
 */
-int ha_rocksdb::open(const char *const name, int mode, uint test_if_locked) {
+int ha_rocksdb::open(const char *const name, int mode, uint test_if_locked,
+                     const dd::Table *table_def) {
   DBUG_ENTER_FUNC();
 
   int err = close();
@@ -5900,7 +5873,7 @@ int rdb_split_normalized_tablename(const std::string &fullname,
 */
 
 int ha_rocksdb::create(const char *const name, TABLE *const table_arg,
-                       HA_CREATE_INFO *const create_info) {
+                       HA_CREATE_INFO *const create_info, dd::Table *table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(table_arg != nullptr);
@@ -9185,7 +9158,8 @@ Rdb_tbl_def *ha_rocksdb::get_table_if_exists(const char *const tablename) {
     other            HA_ERR error code (can be SE-specific)
 */
 
-int ha_rocksdb::delete_table(const char *const tablename) {
+int ha_rocksdb::delete_table(const char *const tablename,
+                             const dd::Table *table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(tablename != nullptr);
@@ -9858,7 +9832,9 @@ my_core::enum_alter_inplace_result ha_rocksdb::check_if_supported_inplace_alter(
 */
 bool ha_rocksdb::prepare_inplace_alter_table(
     TABLE *const altered_table,
-    my_core::Alter_inplace_info *const ha_alter_info) {
+    my_core::Alter_inplace_info *const ha_alter_info,
+    const dd::Table *old_table_def,
+    dd::Table *new_table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(altered_table != nullptr);
@@ -9994,7 +9970,9 @@ bool ha_rocksdb::prepare_inplace_alter_table(
 */
 bool ha_rocksdb::inplace_alter_table(
     TABLE *const altered_table,
-    my_core::Alter_inplace_info *const ha_alter_info) {
+    my_core::Alter_inplace_info *const ha_alter_info,
+    const dd::Table *old_table_def,
+    dd::Table *new_table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(altered_table != nullptr);
@@ -10283,7 +10261,9 @@ int ha_rocksdb::inplace_populate_sk(
 */
 bool ha_rocksdb::commit_inplace_alter_table(
     my_core::TABLE *const altered_table,
-    my_core::Alter_inplace_info *const ha_alter_info, bool commit) {
+    my_core::Alter_inplace_info *const ha_alter_info, bool commit,
+    const dd::Table *old_table_def,
+    dd::Table *new_table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(altered_table != nullptr);
@@ -11209,52 +11189,6 @@ void rocksdb_set_update_cf_options(THD *const /* unused */,
 }
 
 void rdb_queue_save_stats_request() { rdb_bg_thread.request_save_stats(); }
-
-void ha_rocksdb::rpl_before_delete_rows() {
-  DBUG_ENTER_FUNC();
-
-  m_in_rpl_delete_rows = true;
-
-  DBUG_VOID_RETURN;
-}
-
-void ha_rocksdb::rpl_after_delete_rows() {
-  DBUG_ENTER_FUNC();
-
-  m_in_rpl_delete_rows = false;
-
-  DBUG_VOID_RETURN;
-}
-
-void ha_rocksdb::rpl_before_update_rows() {
-  DBUG_ENTER_FUNC();
-
-  m_in_rpl_update_rows = true;
-
-  DBUG_VOID_RETURN;
-}
-
-void ha_rocksdb::rpl_after_update_rows() {
-  DBUG_ENTER_FUNC();
-
-  m_in_rpl_update_rows = false;
-
-  DBUG_VOID_RETURN;
-}
-
-/**
-  @brief
-  Read Free Replication can be used or not. Returning False means
-  Read Free Replication can be used. Read Free Replication can be used
-  on UPDATE or DELETE row events, and table must have user defined
-  primary key.
-*/
-bool ha_rocksdb::use_read_free_rpl() {
-  DBUG_ENTER_FUNC();
-
-  DBUG_RETURN((m_in_rpl_delete_rows || m_in_rpl_update_rows) &&
-              !has_hidden_pk(table) && m_use_read_free_rpl);
-}
 
 double ha_rocksdb::read_time(uint index, uint ranges, ha_rows rows) {
   DBUG_ENTER_FUNC();

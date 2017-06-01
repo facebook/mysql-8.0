@@ -17,6 +17,8 @@
 #ifndef _rdb_psi_h_
 #define _rdb_psi_h_
 
+#include "./mysql/psi/mysql_rwlock.h"
+
 /* MyRocks header files */
 #include "./rdb_utils.h"
 
