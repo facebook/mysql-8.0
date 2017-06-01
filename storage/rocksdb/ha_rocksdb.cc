@@ -8440,7 +8440,7 @@ int ha_rocksdb::index_end() {
     HA_EXIT_SUCCESS  OK
     other            HA_ERR error code (can be SE-specific)
 */
-int ha_rocksdb::truncate() {
+int ha_rocksdb::truncate(dd::Table *table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(m_tbl_def != nullptr);
@@ -9267,7 +9267,8 @@ int ha_rocksdb::remove_rows(Rdb_tbl_def *const tbl) {
     HA_EXIT_SUCCESS  OK
     other            HA_ERR error code (cannot be SE-specific)
 */
-int ha_rocksdb::rename_table(const char *const from, const char *const to) {
+int ha_rocksdb::rename_table(const char *const from, const char *const to,
+                             const dd::Table *from_table_def, dd::Table *to_table_def) {
   DBUG_ENTER_FUNC();
 
   DBUG_ASSERT(from != nullptr);
