@@ -29,6 +29,8 @@
 #include "./handler.h"   /* handler */
 #include "./sql_string.h"
 #include "./ut0counter.h"
+#include "./sql/field.h"
+#include "./my_icp.h"
 
 /* RocksDB header files */
 #include "rocksdb/cache.h"
@@ -342,7 +344,7 @@ enum operation_type : int {
 enum query_type : int { QUERIES_POINT = 0, QUERIES_RANGE, QUERIES_MAX };
 
 #if defined(HAVE_SCHED_GETCPU)
-#define RDB_INDEXER get_sched_indexer_t
+#define RDB_INDEXER counter_indexer_t
 #else
 #define RDB_INDEXER thread_id_indexer_t
 #endif
@@ -532,7 +534,7 @@ class ha_rocksdb : public my_core::handler {
     to be updated.
     @note Valid inside UPDATE statements, IIF(m_update_scope_is_valid == true).
   */
-  my_core::key_map m_update_scope;
+  my_core::Key_map m_update_scope;
   bool m_update_scope_is_valid;
 
   /* SST information used for bulk loading the primary key */
@@ -692,18 +694,6 @@ public:
     DBUG_RETURN(rocksdb_hton_name);
   }
 
-  /* The following is only used by SHOW KEYS: */
-  const char *index_type(uint inx) override {
-    DBUG_ENTER_FUNC();
-
-    DBUG_RETURN("LSMTREE");
-  }
-
-  /** @brief
-    The file extensions.
-   */
-  const char **bas_ext() const override;
-
   /*
     See if this is the same base table - this should only be true for different
     partitions of the same table.
@@ -733,8 +723,6 @@ public:
                 HA_PARTIAL_COLUMN_READ);
   }
 
-  bool init_with_fields() override;
-
   /** @brief
     This is a bitmap of flags that indicates how the storage engine
     implements indexes. The current index flags are documented in
@@ -747,16 +735,10 @@ public:
   */
   ulong index_flags(uint inx, uint part, bool all_parts) const override;
 
-  const key_map *keys_to_use_for_scanning() override {
+  const Key_map *keys_to_use_for_scanning() override {
     DBUG_ENTER_FUNC();
 
     DBUG_RETURN(&key_map_full);
-  }
-
-  bool primary_key_is_clustered() override {
-    DBUG_ENTER_FUNC();
-
-    DBUG_RETURN(true);
   }
 
   bool should_store_row_debug_checksums() const {
@@ -911,7 +893,8 @@ public:
 
   virtual double read_time(uint, uint, ha_rows rows) override;
 
-  int open(const char *const name, int mode, uint test_if_locked) override
+  int open(const char *const name, int mode, uint test_if_locked,
+           const dd::Table *table_def) override
       MY_ATTRIBUTE((__warn_unused_result__));
   int close(void) override MY_ATTRIBUTE((__warn_unused_result__));
 
@@ -1174,10 +1157,10 @@ public:
   ha_rows records_in_range(uint inx, key_range *const min_key,
                            key_range *const max_key) override
       MY_ATTRIBUTE((__warn_unused_result__));
-  int delete_table(const char *const from) override
+  int delete_table(const char *const from, const dd::Table *table_def) override
       MY_ATTRIBUTE((__warn_unused_result__));
   int create(const char *const name, TABLE *const form,
-             HA_CREATE_INFO *const create_info) override
+             HA_CREATE_INFO *const create_info, dd::Table *table_def) override
       MY_ATTRIBUTE((__warn_unused_result__));
   bool check_if_incompatible_data(HA_CREATE_INFO *const info,
                                   uint table_changes) override
@@ -1187,7 +1170,7 @@ public:
                              enum thr_lock_type lock_type) override
       MY_ATTRIBUTE((__warn_unused_result__));
 
-  my_bool register_query_cache_table(THD *const thd, char *const table_key,
+  bool register_query_cache_table(THD *const thd, char *const table_key,
                                      uint key_length,
                                      qc_engine_callback *const engine_callback,
                                      ulonglong *const engine_data) override {
@@ -1223,28 +1206,27 @@ public:
 
   bool prepare_inplace_alter_table(
       TABLE *const altered_table,
-      my_core::Alter_inplace_info *const ha_alter_info) override;
+      my_core::Alter_inplace_info *const ha_alter_info,
+      const dd::Table *old_table_def,
+      dd::Table *new_table_def) override;
 
   bool inplace_alter_table(
       TABLE *const altered_table,
-      my_core::Alter_inplace_info *const ha_alter_info) override;
+      my_core::Alter_inplace_info *const ha_alter_info,
+      const dd::Table *old_table_def,
+      dd::Table *new_table_def) override;
 
   bool
   commit_inplace_alter_table(TABLE *const altered_table,
                              my_core::Alter_inplace_info *const ha_alter_info,
-                             bool commit) override;
+                             bool commit,
+                             const dd::Table *old_table_def,
+                             dd::Table *new_table_def) override;
 
   int finalize_bulk_load() MY_ATTRIBUTE((__warn_unused_result__));
 
   void set_use_read_free_rpl(const char *const whitelist);
   void set_skip_unique_check_tables(const char *const whitelist);
-
-public:
-  virtual void rpl_before_delete_rows() override;
-  virtual void rpl_after_delete_rows() override;
-  virtual void rpl_before_update_rows() override;
-  virtual void rpl_after_update_rows() override;
-  virtual bool use_read_free_rpl();
 
 private:
   /* Flags tracking if we are inside different replication operation */
