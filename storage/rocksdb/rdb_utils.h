@@ -24,6 +24,7 @@
 #include "../sql/log.h"
 #include "./my_stacktrace.h"
 #include "./sql_string.h"
+#include "./mysqld.h"
 
 /* RocksDB header files */
 #include "rocksdb/slice.h"

@@ -73,28 +73,28 @@
 #include "./rdb_threads.h"
 
 // Internal MySQL APIs not exposed in any header.
-extern "C" {
+//extern "C" {
 /**
   Mark transaction to rollback and mark error as fatal to a sub-statement.
-  @param  thd   Thread handle
-  @param  all   TRUE <=> rollback main transaction.
+  @param thd  user thread connection handle
+  @param all  if all != 0, rollback the main transaction
 */
-void thd_mark_transaction_to_rollback(MYSQL_THD thd, bool all);
+void thd_mark_transaction_to_rollback(MYSQL_THD thd, int all);
 
 /**
  *   Get the user thread's binary logging format
  *   @param thd  user thread
  *   @return Value to be used as index into the binlog_format_names array
 */
-int thd_binlog_format(const MYSQL_THD thd);
+int thd_binlog_format(const THD *thd);
 
 /**
  *   Check if binary logging is filtered for thread's current db.
  *   @param  thd   Thread handle
  *   @retval 1 the query is not filtered, 0 otherwise.
 */
-bool thd_binlog_filter_ok(const MYSQL_THD thd);
-}
+bool thd_binlog_filter_ok(const THD *thd);
+//}
 
 namespace myrocks {
 
@@ -4772,7 +4772,7 @@ void ha_rocksdb::setup_field_converters() {
 
   DBUG_ASSERT(m_encoder_arr == nullptr);
   m_encoder_arr = static_cast<Rdb_field_encoder *>(
-      my_malloc(table->s->fields * sizeof(Rdb_field_encoder), MYF(0)));
+      my_malloc(PSI_NOT_INSTRUMENTED, table->s->fields * sizeof(Rdb_field_encoder), MYF(0)));
   if (m_encoder_arr == nullptr) {
     return;
   }
@@ -4853,11 +4853,11 @@ int ha_rocksdb::alloc_key_buffers(const TABLE *const table_arg,
   // move this into get_table_handler() ??
   m_pk_descr->setup(table_arg, tbl_def_arg);
 
-  m_pk_tuple = reinterpret_cast<uchar *>(my_malloc(key_len, MYF(0)));
+  m_pk_tuple = reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, key_len, MYF(0)));
 
   pack_key_len = m_pk_descr->max_storage_fmt_length();
   m_pk_packed_tuple =
-      reinterpret_cast<uchar *>(my_malloc(pack_key_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, pack_key_len, MYF(0)));
 
   /* Sometimes, we may use m_sk_packed_tuple for storing packed PK */
   max_packed_sk_len = pack_key_len;
@@ -4875,15 +4875,15 @@ int ha_rocksdb::alloc_key_buffers(const TABLE *const table_arg,
   }
 
   m_sk_packed_tuple =
-      reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
   m_sk_match_prefix_buf =
-      reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
   m_sk_packed_tuple_old =
-      reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
   m_end_key_packed_tuple =
-      reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
   m_pack_buffer =
-      reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+      reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
 
   /*
     If inplace alter is happening, allocate special buffers for unique
@@ -4891,9 +4891,9 @@ int ha_rocksdb::alloc_key_buffers(const TABLE *const table_arg,
   */
   if (alloc_alter_buffers) {
     m_dup_sk_packed_tuple =
-        reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+        reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
     m_dup_sk_packed_tuple_old =
-        reinterpret_cast<uchar *>(my_malloc(max_packed_sk_len, MYF(0)));
+        reinterpret_cast<uchar *>(my_malloc(PSI_NOT_INSTRUMENTED, max_packed_sk_len, MYF(0)));
   }
 
   if (m_pk_tuple == nullptr || m_pk_packed_tuple == nullptr ||
@@ -7371,6 +7371,8 @@ bool ha_rocksdb::skip_unique_check() const {
           m_tbl_def->m_key_count == 1);
 }
 
+// TODO: determine the replacement if any.
+/*
 void ha_rocksdb::set_force_skip_unique_check(bool skip) {
   DBUG_ENTER_FUNC();
 
@@ -7378,6 +7380,7 @@ void ha_rocksdb::set_force_skip_unique_check(bool skip) {
 
   DBUG_VOID_RETURN;
 }
+*/
 
 bool ha_rocksdb::commit_in_the_middle() {
   return THDVAR(table->in_use, bulk_load) ||
