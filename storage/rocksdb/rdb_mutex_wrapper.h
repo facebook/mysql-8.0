@@ -26,6 +26,7 @@
 /* MySQL header files */
 #include "./my_sys.h"
 #include "mysql/plugin.h"
+#include "sql/current_thd.h"
 
 /* RocksDB header files */
 #include "rocksdb/utilities/transaction_db_mutex.h"

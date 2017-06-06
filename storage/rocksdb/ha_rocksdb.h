@@ -593,7 +593,8 @@ class ha_rocksdb : public my_core::handler {
       MY_ATTRIBUTE((__warn_unused_result__));
   bool is_blind_delete_enabled();
   bool skip_unique_check() const MY_ATTRIBUTE((__warn_unused_result__));
-  void set_force_skip_unique_check(bool skip) override;
+  // TODO: determine the replacement if any.
+  // void set_force_skip_unique_check(bool skip) override;
   bool commit_in_the_middle() MY_ATTRIBUTE((__warn_unused_result__));
   bool do_bulk_commit(Rdb_transaction *const tx)
       MY_ATTRIBUTE((__nonnull__, __warn_unused_result__));
@@ -735,11 +736,14 @@ public:
   */
   ulong index_flags(uint inx, uint part, bool all_parts) const override;
 
+  // TODO: determine the replacement if any.
+  /*
   const Key_map *keys_to_use_for_scanning() override {
     DBUG_ENTER_FUNC();
 
     DBUG_RETURN(&key_map_full);
   }
+  */
 
   bool should_store_row_debug_checksums() const {
     return m_store_row_debug_checksums && (rand() % 100 < m_checksums_pct);
@@ -1170,15 +1174,18 @@ public:
                              enum thr_lock_type lock_type) override
       MY_ATTRIBUTE((__warn_unused_result__));
 
+  // TODO: determine the replacement if any.
+  /*
   bool register_query_cache_table(THD *const thd, char *const table_key,
                                      uint key_length,
                                      qc_engine_callback *const engine_callback,
                                      ulonglong *const engine_data) override {
     DBUG_ENTER_FUNC();
 
-    /* Currently, we don't support query cache */
+    // Currently, we don't support query cache.
     DBUG_RETURN(FALSE);
   }
+  */
 
   bool get_error_message(const int error, String *const buf) override
       MY_ATTRIBUTE((__nonnull__));

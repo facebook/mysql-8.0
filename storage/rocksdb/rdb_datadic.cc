@@ -41,6 +41,10 @@
 #include "./rdb_cf_manager.h"
 #include "./rdb_utils.h"
 
+extern CHARSET_INFO my_charset_utf16_bin;
+extern CHARSET_INFO my_charset_utf16le_bin;
+extern CHARSET_INFO my_charset_utf32_bin;
+
 namespace myrocks {
 
 void get_mem_comparable_space(const CHARSET_INFO *cs,
@@ -89,13 +93,13 @@ Rdb_key_def::Rdb_key_def(const Rdb_key_def &k)
   if (k.m_pack_info) {
     const size_t size = sizeof(Rdb_field_packing) * k.m_key_parts;
     m_pack_info =
-        reinterpret_cast<Rdb_field_packing *>(my_malloc(size, MYF(0)));
+        reinterpret_cast<Rdb_field_packing *>(my_malloc(PSI_NOT_INSTRUMENTED, size, MYF(0)));
     memcpy(m_pack_info, k.m_pack_info, size);
   }
 
   if (k.m_pk_part_no) {
     const size_t size = sizeof(uint) * m_key_parts;
-    m_pk_part_no = reinterpret_cast<uint *>(my_malloc(size, MYF(0)));
+    m_pk_part_no = reinterpret_cast<uint *>(my_malloc(PSI_NOT_INSTRUMENTED, size, MYF(0)));
     memcpy(m_pk_part_no, k.m_pk_part_no, size);
   }
 }
@@ -170,13 +174,13 @@ void Rdb_key_def::setup(const TABLE *const tbl,
 
     if (secondary_key)
       m_pk_part_no = reinterpret_cast<uint *>(
-          my_malloc(sizeof(uint) * m_key_parts, MYF(0)));
+          my_malloc(PSI_NOT_INSTRUMENTED, sizeof(uint) * m_key_parts, MYF(0)));
     else
       m_pk_part_no = nullptr;
 
     const size_t size = sizeof(Rdb_field_packing) * m_key_parts;
     m_pack_info =
-        reinterpret_cast<Rdb_field_packing *>(my_malloc(size, MYF(0)));
+        reinterpret_cast<Rdb_field_packing *>(my_malloc(PSI_NOT_INSTRUMENTED, size, MYF(0)));
 
     /*
       Guaranteed not to error here as checks have been made already during
@@ -262,7 +266,9 @@ void Rdb_key_def::setup(const TABLE *const tbl,
           the offset of the TTL key part here.
         */
         if (!m_ttl_column.empty() &&
-            field->check_field_name_match(m_ttl_column.c_str())) {
+            !my_strcasecmp(system_charset_info,
+                          field->field_name,
+                          m_ttl_column.c_str())) {
           DBUG_ASSERT(field->real_type() == MYSQL_TYPE_LONGLONG);
           DBUG_ASSERT(field->key_type() == HA_KEYTYPE_ULONGLONG);
           DBUG_ASSERT(!field->real_maybe_null());
@@ -377,7 +383,9 @@ uint Rdb_key_def::extract_ttl_col(const TABLE *const table_arg,
   if (skip_checks) {
     for (uint i = 0; i < table_arg->s->fields; i++) {
       Field *const field = table_arg->field[i];
-      if (field->check_field_name_match(ttl_col_str.c_str())) {
+      if (!my_strcasecmp(system_charset_info,
+                    field->field_name,
+                    ttl_col_str.c_str())) {
         *ttl_column = ttl_col_str;
         *ttl_field_offset = i;
       }
@@ -390,7 +398,9 @@ uint Rdb_key_def::extract_ttl_col(const TABLE *const table_arg,
     bool found = false;
     for (uint i = 0; i < table_arg->s->fields; i++) {
       Field *const field = table_arg->field[i];
-      if (field->check_field_name_match(ttl_col_str.c_str()) &&
+      if (!my_strcasecmp(system_charset_info,
+                    field->field_name,
+                    ttl_col_str.c_str()) &&
           field->real_type() == MYSQL_TYPE_LONGLONG &&
           field->key_type() == HA_KEYTYPE_ULONGLONG &&
           !field->real_maybe_null()) {
@@ -724,8 +734,9 @@ uint Rdb_key_def::pack_index_tuple(TABLE *const tbl, uchar *const pack_buffer,
   DBUG_ASSERT(key_tuple != nullptr);
 
   /* We were given a record in KeyTupleFormat. First, save it to record */
-  const uint key_len = calculate_key_len(tbl, m_keyno, key_tuple, keypart_map);
-  key_restore(tbl->record[0], key_tuple, &tbl->key_info[m_keyno], key_len);
+  const uint key_len = calculate_key_len(tbl, m_keyno, keypart_map);
+  key_restore(tbl->record[0], const_cast<uchar *>(key_tuple),
+              &tbl->key_info[m_keyno], key_len);
 
   uint n_used_parts = my_count_bits(keypart_map);
   if (keypart_map == HA_WHOLE_KEY)
@@ -910,7 +921,8 @@ uint Rdb_key_def::pack_record(const TABLE *const tbl, uchar *const pack_buffer,
     // Save the ttl duration offset in the key so we can store it in front of
     // the record later.
     if (ttl_pk_offset && m_ttl_duration > 0 && i == m_ttl_pk_key_part_offset) {
-      DBUG_ASSERT(field->check_field_name_match(m_ttl_column.c_str()));
+      DBUG_ASSERT(!my_strcasecmp(system_charset_info, field->field_name,
+                  m_ttl_column.c_str()));
       DBUG_ASSERT(field->real_type() == MYSQL_TYPE_LONGLONG);
       DBUG_ASSERT(field->key_type() == HA_KEYTYPE_ULONGLONG);
       DBUG_ASSERT(!field->real_maybe_null());
@@ -2431,7 +2443,7 @@ void Rdb_key_def::make_unpack_simple_varchar(
   // The std::min compares characters with bytes, but for simple collations,
   // mbmaxlen = 1.
   rdb_write_unpack_simple(&bit_writer, codec, src,
-                          std::min((size_t)f->char_length(), src_len));
+                          std::min((size_t)(const_cast<Field_varstring *>(f))->char_length(), src_len));
 }
 
 /*
@@ -2453,7 +2465,7 @@ int Rdb_key_def::unpack_simple_varchar_space_pad(
   const Field_varstring *const field_var =
       static_cast<Field_varstring *>(field);
   // For simple collations, char_length is also number of bytes.
-  DBUG_ASSERT((size_t)fpi->m_max_image_len >= field_var->char_length());
+  DBUG_ASSERT((size_t)fpi->m_max_image_len >= (const_cast<Field_varstring *>(field_var))->char_length());
   uchar *dst_end = dst + field_var->pack_length();
   dst += field_var->length_bytes;
   Rdb_bit_reader bit_reader(unp_reader);
@@ -2961,7 +2973,10 @@ bool Rdb_field_packing::setup(const Rdb_key_def *const key_descr,
         // either.
         // Currently we handle these collations as NO_PAD, even if they have
         // PAD_SPACE attribute.
-        if (cs->levels_for_order == 1) {
+        // TODO: https://github.com/facebook/mysql-8.0/commit/e3ac879ed1383b46561855d83e90e813ec5c8f79
+        // removed the levels_for_order member. Determine how to handle it later.
+        // if (cs->levels_for_order == 1) {
+        if (true) {
           m_pack_func = &Rdb_key_def::pack_with_varchar_space_pad;
           m_skip_func = &Rdb_key_def::skip_variable_space_pad;
           m_segment_size = get_segment_size_from_collation(cs);
