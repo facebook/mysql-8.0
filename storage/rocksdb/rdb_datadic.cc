@@ -3184,8 +3184,8 @@ void Rdb_tbl_def::set_name(const std::string &name) {
   (Rdb_tbl_def in our case).
 */
 const uchar *
-Rdb_ddl_manager::get_hash_key(Rdb_tbl_def *const rec, size_t *const length,
-                              bool not_used MY_ATTRIBUTE((__unused__))) {
+Rdb_ddl_manager::get_hash_key(const uchar *arg, size_t *length) {
+  const Rdb_tbl_def *rec = reinterpret_cast<const Rdb_tbl_def * const>(arg);
   const std::string &dbname_tablename = rec->full_tablename();
   *length = dbname_tablename.size();
   return reinterpret_cast<const uchar *>(dbname_tablename.c_str());
@@ -3266,6 +3266,7 @@ bool Rdb_validate_tbls::check_frm_file(const std::string &fullpath,
                                        const std::string &dbname,
                                        const std::string &tablename,
                                        bool *has_errors) {
+#if 0
   /* Check this .frm file to see what engine it uses */
   String fullfilename(fullpath.c_str(), &my_charset_bin);
   fullfilename.append(FN_DIRSEP);
@@ -3314,6 +3315,13 @@ bool Rdb_validate_tbls::check_frm_file(const std::string &fullpath,
   }
 
   return true;
+#else
+  // TODO: Data dictionary implementation is different in MySQL 8.0. This part
+  // needs to be rewritten in MyRocks. See
+  // https://github.com/facebook/mysql-8.0/commit/31350e8ab15179acab51 for more
+  // details.
+  return false;
+#endif
 }
 
 /* Scan the database subdirectory for .frm files */
@@ -3443,8 +3451,8 @@ bool Rdb_ddl_manager::init(Rdb_dict_manager *const dict_arg,
   mysql_rwlock_init(0, &m_rwlock);
   (void)my_hash_init(&m_ddl_hash,
                      /*system_charset_info*/ &my_charset_bin, TABLE_HASH_SIZE,
-                     0, 0, (my_hash_get_key)Rdb_ddl_manager::get_hash_key,
-                     Rdb_ddl_manager::free_hash_elem, 0);
+                     0, (hash_get_key_function) Rdb_ddl_manager::get_hash_key,
+                     Rdb_ddl_manager::free_hash_elem, 0, 0);
 
   /* Read the data dictionary and populate the hash */
   uchar ddl_entry[Rdb_key_def::INDEX_NUMBER_SIZE];

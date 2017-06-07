@@ -222,7 +222,7 @@ const char *const RDB_TTL_COL_QUALIFIER = "ttl_col";
 
   The reason behind the cast issue is the lack of unsigned int support in Java.
 */
-#define MAX_RATE_LIMITER_BYTES_PER_SEC static_cast<uint64_t>(LONGLONG_MAX)
+#define MAX_RATE_LIMITER_BYTES_PER_SEC static_cast<uint64_t>(LLONG_MAX)
 
 /*
   Hidden PK column (for tables with no primary key) is a longlong (aka 8 bytes).

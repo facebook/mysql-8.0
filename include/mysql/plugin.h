@@ -206,24 +206,25 @@ typedef int (*mysql_show_var_func)(MYSQL_THD, struct st_mysql_show_var*, char *)
 */
 
 
-#define PLUGIN_VAR_BOOL         0x0001
-#define PLUGIN_VAR_INT          0x0002
-#define PLUGIN_VAR_LONG         0x0003
-#define PLUGIN_VAR_LONGLONG     0x0004
-#define PLUGIN_VAR_STR          0x0005
-#define PLUGIN_VAR_ENUM         0x0006
-#define PLUGIN_VAR_SET          0x0007
-#define PLUGIN_VAR_DOUBLE       0x0008
-#define PLUGIN_VAR_UNSIGNED     0x0080
-#define PLUGIN_VAR_THDLOCAL     0x0100 /* Variable is per-connection */
-#define PLUGIN_VAR_READONLY     0x0200 /* Server variable is read only */
-#define PLUGIN_VAR_NOSYSVAR     0x0400 /* Not a server variable */
-#define PLUGIN_VAR_NOCMDOPT     0x0800 /* Not a command line option */
-#define PLUGIN_VAR_NOCMDARG     0x1000 /* No argument for cmd line */
-#define PLUGIN_VAR_RQCMDARG     0x0000 /* Argument required for cmd line */
-#define PLUGIN_VAR_OPCMDARG     0x2000 /* Argument optional for cmd line */
-#define PLUGIN_VAR_NODEFAULT    0x4000 /* SET DEFAULT is prohibited */
-#define PLUGIN_VAR_MEMALLOC     0x8000 /* String needs memory allocated */
+#define PLUGIN_VAR_BOOL         0x00001
+#define PLUGIN_VAR_INT          0x00002
+#define PLUGIN_VAR_LONG         0x00003
+#define PLUGIN_VAR_LONGLONG     0x00004
+#define PLUGIN_VAR_STR          0x00005
+#define PLUGIN_VAR_ENUM         0x00006
+#define PLUGIN_VAR_SET          0x00007
+#define PLUGIN_VAR_DOUBLE       0x00008
+#define PLUGIN_VAR_UNSIGNED     0x00080
+#define PLUGIN_VAR_THDLOCAL     0x00100 /* Variable is per-connection */
+#define PLUGIN_VAR_READONLY     0x00200 /* Server variable is read only */
+#define PLUGIN_VAR_NOSYSVAR     0x00400 /* Not a server variable */
+#define PLUGIN_VAR_NOCMDOPT     0x00800 /* Not a command line option */
+#define PLUGIN_VAR_NOCMDARG     0x01000 /* No argument for cmd line */
+#define PLUGIN_VAR_RQCMDARG     0x00000 /* Argument required for cmd line */
+#define PLUGIN_VAR_OPCMDARG     0x02000 /* Argument optional for cmd line */
+#define PLUGIN_VAR_NODEFAULT    0x04000 /* SET DEFAULT is prohibited */
+#define PLUGIN_VAR_MEMALLOC     0x08000 /* String needs memory allocated */
+#define PLUGIN_VAR_ALLOCATED    0x10000 /* memory for string has been allocated*/
 
 struct st_mysql_sys_var;
 struct st_mysql_value;
@@ -277,7 +278,7 @@ typedef void (*mysql_var_update_func)(MYSQL_THD thd,
         (PLUGIN_VAR_READONLY | PLUGIN_VAR_NOSYSVAR | \
          PLUGIN_VAR_NOCMDOPT | PLUGIN_VAR_NOCMDARG | \
          PLUGIN_VAR_OPCMDARG | PLUGIN_VAR_RQCMDARG | PLUGIN_VAR_MEMALLOC | \
-         PLUGIN_VAR_NODEFAULT)
+         PLUGIN_VAR_NODEFAULT | PLUGIN_VAR_ALLOCATED)
 
 #define MYSQL_PLUGIN_VAR_HEADER \
   int flags;                    \
@@ -597,6 +598,12 @@ struct st_mysql_value
   int (*is_unsigned)(struct st_mysql_value *);
 };
 
+struct st_slave_gtid_info
+{
+  unsigned int id;
+  const char* db;
+  const char* gtid;
+};
 
 /*************************************************************************
   Miscellaneous functions for plugin implementors

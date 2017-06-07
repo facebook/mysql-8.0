@@ -214,15 +214,13 @@ struct Rdb_open_tables_map {
 
   void init_hash(void) {
     (void)my_hash_init(&m_hash, my_core::system_charset_info, TABLE_HASH_SIZE,
-                       0, 0, (my_hash_get_key)Rdb_open_tables_map::get_hash_key,
-                       0, 0);
+                       0, (hash_get_key_function) Rdb_open_tables_map::get_hash_key,
+                       nullptr, 0, 0);
   }
 
   void free_hash(void) { my_hash_free(&m_hash); }
 
-  static uchar *get_hash_key(Rdb_table_handler *const table_handler,
-                             size_t *const length,
-                             bool not_used MY_ATTRIBUTE((__unused__)));
+  static uchar *get_hash_key(const uchar *arg, size_t *length);
 
   Rdb_table_handler *get_table_handler(const char *const table_name);
   void release_table_handler(Rdb_table_handler *const table_handler);
@@ -988,7 +986,7 @@ static MYSQL_SYSVAR_LONGLONG(block_cache_size, rocksdb_block_cache_size,
                              "block_cache size for RocksDB", nullptr, nullptr,
                              /* default */ RDB_DEFAULT_BLOCK_CACHE_SIZE,
                              /* min */ RDB_MIN_BLOCK_CACHE_SIZE,
-                             /* max */ LONGLONG_MAX,
+                             /* max */ LLONG_MAX,
                              /* Block size */ RDB_MIN_BLOCK_CACHE_SIZE);
 
 static MYSQL_SYSVAR_BOOL(
@@ -1237,7 +1235,7 @@ static MYSQL_SYSVAR_LONGLONG(
     rocksdb_compaction_sequential_deletes_file_size, PLUGIN_VAR_RQCMDARG,
     "Minimum file size required for compaction_sequential_deletes", nullptr,
     rocksdb_set_compaction_options, 0L,
-    /* min */ -1L, /* max */ LONGLONG_MAX, 0);
+    /* min */ -1L, /* max */ LLONG_MAX, 0);
 
 static MYSQL_SYSVAR_BOOL(
     compaction_sequential_deletes_count_sd,
@@ -1456,9 +1454,9 @@ rdb_get_rocksdb_write_options(my_core::THD *const thd) {
 */
 
 uchar *
-Rdb_open_tables_map::get_hash_key(Rdb_table_handler *const table_handler,
-                                  size_t *const length,
-                                  bool not_used MY_ATTRIBUTE((__unused__))) {
+Rdb_open_tables_map::get_hash_key(const uchar *arg, size_t *length) {
+  const Rdb_table_handler *table_handler =
+   reinterpret_cast<const Rdb_table_handler * const>(arg);
   *length = table_handler->m_table_name_length;
   return reinterpret_cast<uchar *>(table_handler->m_table_name);
 }
@@ -1534,6 +1532,23 @@ public:
 /* This is the base class for transactions when interacting with rocksdb.
 */
 class Rdb_transaction {
+private:
+  inline String timeout_message(const char *command, const char *name1,
+                                 const char *name2)
+  {
+    String msg;
+    msg.append("Timeout on ");
+    msg.append(command);
+    msg.append(": ");
+    msg.append(name1);
+    if (name2 && name2[0])
+    {
+      msg.append(".");
+      msg.append(name2);
+    }
+    return msg;
+  }
+
 protected:
   ulonglong m_write_count = 0;
   ulonglong m_insert_count = 0;
@@ -1642,7 +1657,7 @@ public:
       rocksdb_snapshot_conflict_errors++;
       if (rocksdb_print_snapshot_conflict_queries) {
         char user_host_buff[MAX_USER_HOST_SIZE + 1];
-        make_user_name(thd, user_host_buff);
+        make_user_name(thd->security_context(), user_host_buff);
         // NO_LINT_DEBUG
         sql_print_warning("Got snapshot conflict errors: User: %s "
                           "Query: %s",
@@ -2535,25 +2550,25 @@ static int rocksdb_close_connection(handlerton *const hton, THD *const thd) {
  * be used as a rocksdb transaction name
  */
 static std::string rdb_xid_to_string(const XID &src) {
-  DBUG_ASSERT(src.gtrid_length >= 0 && src.gtrid_length <= MAXGTRIDSIZE);
-  DBUG_ASSERT(src.bqual_length >= 0 && src.bqual_length <= MAXBQUALSIZE);
+  DBUG_ASSERT(src.get_gtrid_length() >= 0 && src.get_gtrid_length() <= MAXGTRIDSIZE);
+  DBUG_ASSERT(src.get_bqual_length() >= 0 && src.get_bqual_length() <= MAXBQUALSIZE);
 
   std::string buf;
-  buf.reserve(RDB_XIDHDR_LEN + src.gtrid_length + src.bqual_length);
+  buf.reserve(RDB_XIDHDR_LEN + src.get_gtrid_length() + src.get_bqual_length());
 
   /*
    * expand formatID to fill 8 bytes if it doesn't already
    * then reinterpret bit pattern as unsigned and store in network order
    */
   uchar fidbuf[RDB_FORMATID_SZ];
-  int64 signed_fid8 = src.formatID;
+  int64 signed_fid8 = src.get_format_id();
   const uint64 raw_fid8 = *reinterpret_cast<uint64 *>(&signed_fid8);
   rdb_netbuf_store_uint64(fidbuf, raw_fid8);
   buf.append(reinterpret_cast<const char *>(fidbuf), RDB_FORMATID_SZ);
 
-  buf.push_back(src.gtrid_length);
-  buf.push_back(src.bqual_length);
-  buf.append(src.data, (src.gtrid_length) + (src.bqual_length));
+  buf.push_back(src.get_gtrid_length());
+  buf.push_back(src.get_bqual_length());
+  buf.append(src.get_data(), src.get_gtrid_length() + src.get_bqual_length());
   return buf;
 }
 
@@ -2693,17 +2708,17 @@ static void rdb_xid_from_string(const std::string &src, XID *const dst) {
   uint64 raw_fid8 =
       rdb_netbuf_to_uint64(reinterpret_cast<const uchar *>(src.data()));
   const int64 signed_fid8 = *reinterpret_cast<int64 *>(&raw_fid8);
-  dst->formatID = signed_fid8;
+  dst->set_format_id(signed_fid8);
   offset += RDB_FORMATID_SZ;
-  dst->gtrid_length = src.at(offset);
+  dst->set_gtrid_length(src.at(offset));
   offset += RDB_GTRID_SZ;
-  dst->bqual_length = src.at(offset);
+  dst->set_bqual_length(src.at(offset));
   offset += RDB_BQUAL_SZ;
 
-  DBUG_ASSERT(dst->gtrid_length >= 0 && dst->gtrid_length <= MAXGTRIDSIZE);
-  DBUG_ASSERT(dst->bqual_length >= 0 && dst->bqual_length <= MAXBQUALSIZE);
+  DBUG_ASSERT(dst->get_gtrid_length() >= 0 && dst->get_gtrid_length() <= MAXGTRIDSIZE);
+  DBUG_ASSERT(dst->get_bqual_length() >= 0 && dst->get_bqual_length() <= MAXBQUALSIZE);
 
-  src.copy(dst->data, (dst->gtrid_length) + (dst->bqual_length),
+  src.copy(dst->get_data(), (dst->get_gtrid_length()) + (dst->get_bqual_length()),
            RDB_XIDHDR_LEN);
 }
 
