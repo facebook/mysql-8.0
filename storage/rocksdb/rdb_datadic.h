@@ -1014,8 +1014,7 @@ private:
   int put(Rdb_tbl_def *const key_descr, const bool &lock = true);
 
   /* Helper functions to be passed to my_core::HASH object */
-  static const uchar *get_hash_key(Rdb_tbl_def *const rec, size_t *const length,
-                                   bool not_used MY_ATTRIBUTE((unused)));
+  static const uchar *get_hash_key(const uchar *arg, size_t *length);
   static void free_hash_elem(void *const data);
 
   bool validate_schemas();

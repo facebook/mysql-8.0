@@ -3603,9 +3603,10 @@ static bool plugin_var_memalloc_global_update(THD *thd,
   DBUG_EXECUTE_IF("simulate_bug_20292712", my_sleep(1000););
   DBUG_ENTER("plugin_var_memalloc_global_update");
 
-  if (value && !(value= my_strdup(key_memory_global_system_variables,
-                                  value, MYF(MY_WME))))
-    DBUG_RETURN(true);
+  if (!(var->flags & PLUGIN_VAR_ALLOCATED)) {
+    if (value && !(value= my_strdup(value, MYF(MY_WME))))
+      DBUG_RETURN(true);
+  }
 
   var->update(thd, var, (void **) dest, (const void *) &value);
 
