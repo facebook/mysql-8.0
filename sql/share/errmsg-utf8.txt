@@ -8031,6 +8031,15 @@ ER_RDB_TTL_COL_FORMAT
 ER_RDB_TTL_DURATION_FORMAT
   eng "TTL duration (%s) in MyRocks must be an unsigned non-null 64-bit integer."
 
+ER_RDB_STATUS_MSG
+  eng "%s, Status error %d received from RocksDB: %s"
+
+ER_RDB_STATUS_GENERAL
+  eng "Status error %d received from RocksDB: %s"
+
+ER_RDB_TTL_UNSUPPORTED
+  eng "TTL support is currently disabled when table has secondary indexes or hidden PK."
+
 #
 #  End of 8.0 error messages.
 #
