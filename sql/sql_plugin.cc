@@ -3604,7 +3604,7 @@ static bool plugin_var_memalloc_global_update(THD *thd,
   DBUG_ENTER("plugin_var_memalloc_global_update");
 
   if (!(var->flags & PLUGIN_VAR_ALLOCATED)) {
-    if (value && !(value= my_strdup(value, MYF(MY_WME))))
+    if (value && !(value= my_strdup(PSI_NOT_INSTRUMENTED, value, MYF(MY_WME))))
       DBUG_RETURN(true);
   }
 

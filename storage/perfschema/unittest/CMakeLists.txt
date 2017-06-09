@@ -73,6 +73,14 @@ TARGET_LINK_LIBRARIES(pfs_connect_attr-t vio ${SSL_LIBRARIES})
 TARGET_LINK_LIBRARIES(pfs_connect_attr-t strings dbug regex mysys ${ZLIB_LIBRARY})
 ADD_TEST(pfs_connect_attr pfs_connect_attr-t)
 
+# Necessary to make sure that we can use the jemalloc API calls.
+GET_TARGET_PROPERTY(pfs_connect_attr-t LINK_FLAGS PREV_LINK_FLAGS)
+IF(NOT PREV_LINK_FLAGS)
+  SET(PREV_LINK_FLAGS)
+ENDIF()
+SET_TARGET_PROPERTIES(pfs_connect_attr-t PROPERTIES LINK_FLAGS
+                      "${PREV_LINK_FLAGS} ${WITH_MYSQLD_LDFLAGS}")
+
 # ADD_EXECUTABLE(pfs_benchmark-t pfs_benchmark-t.cc pfs_benchmark_helper.cc)
 # TARGET_LINK_LIBRARIES(pfs_benchmark-t mytap perfschema mysys pfs_server_stubs)
 # ADD_TEST(pfs_benchmark pfs_benchmark-t)

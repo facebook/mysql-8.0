@@ -1313,8 +1313,9 @@ private:
   */
   bool nullable;
 
-  uint8   m_status;                     /* What's in record[0] */
 public:
+  uint8   m_status;                     /* What's in record[0] */
+
   /*
     If true, the current table row is considered to have all columns set to 
     NULL, including columns declared as "not null" (see nullable).
