@@ -5026,9 +5026,7 @@ void ha_rocksdb::set_use_read_free_rpl(const char *const whitelist) {
 #endif
 
   if (!regex_handler.set_patterns(whitelist)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    // warn_about_bad_patterns(&regex_handler, "read_free_rpl_tables");
+    warn_about_bad_patterns(&regex_handler, "read_free_rpl_tables");
   }
 
   m_use_read_free_rpl = regex_handler.matches(m_tbl_def->base_tablename());
@@ -5044,9 +5042,7 @@ void ha_rocksdb::set_skip_unique_check_tables(const char *const whitelist) {
 #endif
 
   if (!regex_handler.set_patterns(whitelist)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    // warn_about_bad_patterns(&regex_handler, "skip_unique_check_tables");
+    warn_about_bad_patterns(&regex_handler, "skip_unique_check_tables");
   }
 
   m_skip_unique_check = regex_handler.matches(m_tbl_def->base_tablename());
@@ -11137,12 +11133,8 @@ void rdb_set_collation_exception_list(const char *const exception_list) {
   DBUG_ASSERT(rdb_collation_exceptions != nullptr);
 
   if (!rdb_collation_exceptions->set_patterns(exception_list)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    /*
-    my_core::warn_about_bad_patterns(rdb_collation_exceptions,
+    warn_about_bad_patterns(rdb_collation_exceptions,
                                      "strict_collation_exceptions");
-                                     */
   }
 }
 
