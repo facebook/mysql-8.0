@@ -21,6 +21,7 @@
 #include <vector>
 
 /* MySQL header files */
+#include "../sql/handler.h"
 #include "../sql/log.h"
 #include "./my_stacktrace.h"
 #include "./sql_string.h"
@@ -284,5 +285,8 @@ std::string rdb_hexdump(const char *data, const std::size_t data_len,
   Helper function to see if a database exists
  */
 bool rdb_database_exists(const std::string &db_name);
+
+void warn_about_bad_patterns(const Regex_list_handler* regex_list_handler,
+                             const char *name);
 
 } // namespace myrocks
