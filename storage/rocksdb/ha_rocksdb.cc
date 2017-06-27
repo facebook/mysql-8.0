@@ -3026,10 +3026,7 @@ public:
     DBUG_ASSERT(tx != nullptr);
 
     THD *const thd = tx->get_thd();
-    // TODO: port over support for thd_thread_id. Please see
-    // https://github.com/facebook/mysql-5.6/commit/bc9c88ab7 for context.
-    // ulong thread_id = thd_thread_id(thd);
-    ulong thread_id = 0;
+    my_thread_id thread_id = thd->thread_id();
 
     if (tx->is_writebatch_trx()) {
       const auto wb_impl = static_cast<const Rdb_writebatch_impl *>(tx);
