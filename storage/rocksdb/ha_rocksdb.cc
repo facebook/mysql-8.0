@@ -4074,16 +4074,14 @@ std::vector<std::string> Rdb_open_tables_map::get_table_names(void) const {
   std::vector<std::string> names;
 
   RDB_MUTEX_LOCK_CHECK(m_mutex);
-  // TODO: port over support for my_hash_const_element. Please see
-  // https://github.com/facebook/mysql-5.6/commit/586f2259 for context.
-  /*
+
   for (i = 0; (table_handler = reinterpret_cast<const Rdb_table_handler *>(
                    my_hash_const_element(&m_hash, i)));
        i++) {
     DBUG_ASSERT(table_handler != nullptr);
     names.push_back(table_handler->m_table_name);
   }
-  */
+
   DBUG_ASSERT(i == m_hash.records);
   RDB_MUTEX_UNLOCK_CHECK(m_mutex);
 
