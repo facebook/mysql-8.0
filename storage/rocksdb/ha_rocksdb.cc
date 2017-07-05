@@ -3026,10 +3026,7 @@ public:
     DBUG_ASSERT(tx != nullptr);
 
     THD *const thd = tx->get_thd();
-    // TODO: port over support for thd_thread_id. Please see
-    // https://github.com/facebook/mysql-5.6/commit/bc9c88ab7 for context.
-    // ulong thread_id = thd_thread_id(thd);
-    ulong thread_id = 0;
+    my_thread_id thread_id = thd->thread_id();
 
     if (tx->is_writebatch_trx()) {
       const auto wb_impl = static_cast<const Rdb_writebatch_impl *>(tx);
@@ -4074,16 +4071,14 @@ std::vector<std::string> Rdb_open_tables_map::get_table_names(void) const {
   std::vector<std::string> names;
 
   RDB_MUTEX_LOCK_CHECK(m_mutex);
-  // TODO: port over support for my_hash_const_element. Please see
-  // https://github.com/facebook/mysql-5.6/commit/586f2259 for context.
-  /*
+
   for (i = 0; (table_handler = reinterpret_cast<const Rdb_table_handler *>(
                    my_hash_const_element(&m_hash, i)));
        i++) {
     DBUG_ASSERT(table_handler != nullptr);
     names.push_back(table_handler->m_table_name);
   }
-  */
+
   DBUG_ASSERT(i == m_hash.records);
   RDB_MUTEX_UNLOCK_CHECK(m_mutex);
 
@@ -5026,9 +5021,7 @@ void ha_rocksdb::set_use_read_free_rpl(const char *const whitelist) {
 #endif
 
   if (!regex_handler.set_patterns(whitelist)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    // warn_about_bad_patterns(&regex_handler, "read_free_rpl_tables");
+    warn_about_bad_patterns(&regex_handler, "read_free_rpl_tables");
   }
 
   m_use_read_free_rpl = regex_handler.matches(m_tbl_def->base_tablename());
@@ -5044,9 +5037,7 @@ void ha_rocksdb::set_skip_unique_check_tables(const char *const whitelist) {
 #endif
 
   if (!regex_handler.set_patterns(whitelist)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    // warn_about_bad_patterns(&regex_handler, "skip_unique_check_tables");
+    warn_about_bad_patterns(&regex_handler, "skip_unique_check_tables");
   }
 
   m_skip_unique_check = regex_handler.matches(m_tbl_def->base_tablename());
@@ -11137,12 +11128,8 @@ void rdb_set_collation_exception_list(const char *const exception_list) {
   DBUG_ASSERT(rdb_collation_exceptions != nullptr);
 
   if (!rdb_collation_exceptions->set_patterns(exception_list)) {
-    // TODO: port over support for warn_about_bad_patterns. Please see
-    // https://github.com/facebook/mysql-5.6/commit/de1a92eb1 for context.
-    /*
-    my_core::warn_about_bad_patterns(rdb_collation_exceptions,
+    warn_about_bad_patterns(rdb_collation_exceptions,
                                      "strict_collation_exceptions");
-                                     */
   }
 }
 

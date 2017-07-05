@@ -303,4 +303,14 @@ void rdb_log_status_error(const rocksdb::Status &s, const char *msg) {
                   s.ToString().c_str());
 }
 
+void warn_about_bad_patterns(const Regex_list_handler* regex_list_handler,
+                             const char *name)
+{
+  // There was some invalid regular expression data in the patterns supplied
+
+  // NO_LINT_DEBUG
+  sql_print_warning("Invalid pattern in %s: %s", name,
+                    regex_list_handler->bad_pattern().c_str());
+}
+
 } // namespace myrocks
