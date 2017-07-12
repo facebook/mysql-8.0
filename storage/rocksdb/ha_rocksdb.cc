@@ -823,7 +823,7 @@ static MYSQL_SYSVAR_INT(max_background_compactions,
                         "DBOptions::max_background_compactions for RocksDB",
                         nullptr, rocksdb_set_max_background_compactions,
                         rocksdb_db_options->max_background_compactions,
-                        /* min */ 1, /* max */ MAX_BACKGROUND_COMPACTIONS, 0);
+                        /* min */ -1, /* max */ MAX_BACKGROUND_COMPACTIONS, 0);
 
 static MYSQL_SYSVAR_INT(max_background_flushes,
                         rocksdb_db_options->max_background_flushes,
@@ -831,7 +831,7 @@ static MYSQL_SYSVAR_INT(max_background_flushes,
                         "DBOptions::max_background_flushes for RocksDB",
                         nullptr, nullptr,
                         rocksdb_db_options->max_background_flushes,
-                        /* min */ 1, /* max */ MAX_BACKGROUND_FLUSHES, 0);
+                        /* min */ -1, /* max */ MAX_BACKGROUND_FLUSHES, 0);
 
 static MYSQL_SYSVAR_UINT(max_subcompactions,
                          rocksdb_db_options->max_subcompactions,
