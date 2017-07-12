@@ -1,0 +1,2 @@
+/data/users/gunnarku/mysql/8.0-gunnarku/_build-8.0-Debug/sql/mysqld --defaults-group-suffix=.1 --defaults-file=/home/gunnarku/mysql/8.0-gunnarku/_build-8.0-Debug/mysql-test/var/my.cnf --log-output=file --loose-debug-sync-timeout=600 --gdb --rocksdb --log-syslog=0 --core-file
+/data/users/gunnarku/mysql/8.0-gunnarku/_build-8.0-Debug/sql/mysqld --defaults-group-suffix=.2 --defaults-file=/home/gunnarku/mysql/8.0-gunnarku/_build-8.0-Debug/mysql-test/var/my.cnf --log-output=file --loose-debug-sync-timeout=600 --gdb --rocksdb --log-syslog=0 --core-file
